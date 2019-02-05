@@ -1,0 +1,22 @@
+{
+  "name": "maj",
+  "version": "1.0.0",
+  "description": "maj代码",
+  "main": "MAJAI.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fatestwang/maj.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/fatestwang/maj/issues"
+  },
+  "homepage": "https://github.com/fatestwang/maj#readme",
+  "dependencies": {
+    "xml2js": "^0.4.19"
+  }
+}
