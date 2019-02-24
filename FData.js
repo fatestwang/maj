@@ -1,3 +1,4 @@
+//FData已经完成了它的使命，不再需要啦。
 class FData{
     constructor(){
         console.log('this is a hackde info');
