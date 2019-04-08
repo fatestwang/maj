@@ -1,4 +1,4 @@
-let OperationList = {
+let Operation = {
     0: "none",
     1: "dapai",
     2: "eat",
@@ -25,4 +25,4 @@ let OperationList = {
     zimo: 8,
 }
 
-module.exports = OperationList;
+module.exports = Operation;
