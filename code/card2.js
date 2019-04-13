@@ -1,5 +1,11 @@
 const cardTypes = ['m', 'p', 's', 'z'];
-const recordTypes = ['tiles', 'ke', 'shun', 'que', 'redora', 'dora', 'lian', 'kan', 'single'];
+const visiable = {
+    m:'万',
+    p:'筒',
+    s:'条',
+    z:'字'
+};
+const recordTypes = ['tiles', 'ke', 'shun', 'que', 'redora', 'dora', 'lian', 'qian', 'single'];
 class TileInfo {
     constructor() {
         for (let type of recordTypes) {
@@ -12,7 +18,7 @@ class TileInfo {
             }
         }
         for (let key of cardTypes)
-            for (let i = -1; i < 11; i++) {
+            for (let i = -1; i <= 11; i++) {
                 this[key][i] = {};
                 for (let type of recordTypes) {
                     this[key][i][type] = 0;
@@ -35,9 +41,10 @@ class TileInfo {
     }
     newSingle(key, card) { //key:mpsz, card:1-9
         if (card == 0) { //red five
-            this.tileInfo[key].redora++;
+            this[key].redora++;
             card = 5;
         }
+        //顺联
         if (key != 'z') {
             if (this[key][card - 2]['lian'] > 0) {
                 this[key][card - 2]['lian']--;
@@ -46,7 +53,7 @@ class TileInfo {
                 this[key][card - 2]['shun']++;
                 this.refreshInfo();
                 return;
-            }
+            } //左联
             if (this[key][card + 1]['lian'] > 0) {
                 this[key][card + 1]['lian']--;
                 this[key]['lian']--;
@@ -54,15 +61,37 @@ class TileInfo {
                 this[key][card]['shun']++;
                 this.refreshInfo();
                 return;
-            }
-            if (this[key][card - 1]['kan'] > 0) {
-                this[key][card - 1]['kan']--;
-                this[key]['kan']--;
+            } //右联
+            if (this[key][card - 1]['qian'] > 0) {
+                this[key][card - 1]['qian']--;
+                this[key]['qian']--;
                 this[key]['shun']++;
-                this[key][card - 1]['kan']++;
+                this[key][card - 1]['shun']++;
                 this.refreshInfo();
                 return;
-            }
+            } //中崁
+            if (card > 5 && this[key][card - 3]['shun'] > 0 && this[key][card - 5]['lian'] > 0) {
+                this[key][card - 3]['shun']--;
+                this[key][card - 5]['lian']--;
+                this[key][card - 5]['shun']++;
+                this[key][card - 2]['shun']++;
+                this[key]['lian']--;
+                this[key]['shun']++;
+                this.refreshInfo();
+                return;
+            } //左跳联
+            if (card > 8 && this[key][card - 3]['shun'] > 0 && this[key][card - 6]['shun'] > 0 && this[key][card - 8]['lian'] > 0) {
+                this[key][card - 3]['shun']--;
+                this[key][card - 6]['shun']--;
+                this[key][card - 8]['lian']--;
+                this[key][card - 8]['shun']++;
+                this[key][card - 5]['shun']++;
+                this[key][card - 2]['shun']++;
+                this[key]['lian']--;
+                this[key]['shun']++;
+                this.refreshInfo();
+                return;
+            } //左跳二联
             if (card < 5 && this[key][card + 1]['shun'] > 0 && this[key][card + 4]['lian'] > 0) {
                 this[key][card + 1]['shun']--;
                 this[key][card + 4]['lian']--;
@@ -72,10 +101,118 @@ class TileInfo {
                 this[key]['shun']++;
                 this.refreshInfo();
                 return;
-            }
+            } //右跳联
+            if (card < 2 && this[key][card + 1]['shun'] > 0 && this[key][card + 4]['shun'] > 0 && this[key][card + 7]['lian'] > 0) {
+                this[key][card + 1]['shun']--;
+                this[key][card + 4]['shun']--;
+                this[key][card + 7]['lian']--;
+                this[key][card]['shun']++;
+                this[key][card + 3]['shun']++;
+                this[key][card + 6]['shun']++;
+                this[key]['lian']--;
+                this[key]['shun']++;
+                this.refreshInfo();
+                return;
+            } //右跳二联
+            if (card > 3 && this[key][card - 3]['qian'] > 0 && this[key][card + 1]['single'] > 0) {
+                this[key][card - 3]['qian']--;
+                this[key][card + 1]['single']--;
+                this[key][card - 3]['signle']++;
+                this[key][card - 1]['shun']++;
+                this[key]['qian']--;
+                this[key]['shun']++;
+                return;
+            } //左崁跳单
+            if (this[key][card + 1]['qian'] > 0 && this[key][card - 1]['single'] > 0) {
+                this[key][card + 1]['qian']--;
+                this[key][card - 1]['single']--;
+                this[key][card + 3]['signle']++;
+                this[key][card - 1]['shun']++;
+                this[key]['qian']--;
+                this[key]['shun']++;
+                return;
+            } //左单跳崁
+        }
+        //刻子
+        {
+            if(this[key][card]['que']>0){
+                this[key][card]['que']--;
+                this[key][card]['ke']++;
+                this[key]['que']--;
+                this[key]['ke']++;
+                return;
+            }//本刻
+        }
+        //雀头
+        {
+            if(this[key][card]['single']>0){
+                this[key][card]['single']--;
+                this[key][card]['que']++;
+                this[key]['single']--;
+                this[key]['que']++;
+                return;
+            }//本雀
         }
 
+        //连张
+        if(key != 'z'){
+            if(this[key][card-1]['single']>0){
+                this[key][card-1]['single']--;
+                this[key][card-1]['lian']++;
+                this[key]['single']--;
+                this[key]['lian']++;
+                return;
+            }//左连
+            if(this[key][card+1]['single']>0){
+                this[key][card+1]['single']--;
+                this[key][card]['lian']++;
+                this[key]['single']--;
+                this[key]['lian']++;
+                return;
+            }//右连
+        }
+        //嵌张
+        if(key !='z'){
+            if(this[key][card-2]['single']>0){
+                this[key][card-2]['single']--;
+                this[key][card-2]['qian']++;
+                this[key]['single']--;
+                this[key]['qian']++;
+                return;
+            }//左嵌
+            if(this[key][card+2]['single']>0){
+                this[key][card+2]['single']--;
+                this[key][card]['qian']++;
+                this[key]['single']--;
+                this[key]['qian']++;
+                return;
+            }//右嵌
 
+        }
+        //单张
+        this[key][card]['single']++;
+        return;
+    }
+    printDebug() {
+        let str = '';
+        for (let key of cardTypes) {
+            let keyStr = visiable[key];
+            for (let i = 1; i < 10; i++) {
+                if (this[key][i]['shun'] > 0)
+                    str += i + keyStr + (i + 1) + keyStr + (i + 2) + keyStr + '*' + this[key][i]['shun'] + ' ';
+                if (this[key][i]['ke'] > 0)
+                    str += i + keyStr + i + keyStr + i + keyStr + '*' + this[key][i]['ke'] + ' ';
+                if (this[key][i]['que'] > 0)
+                    str += i + keyStr + i + keyStr + '*' + this[key][i]['que'] + ' ';
+                if (this[key][i]['lian'] > 0)
+                    str += i + keyStr + (i + 1) + keyStr + '*' + this[key][i]['lian'] + ' ';
+                if (this[key][i]['qian'] > 0)
+                    str += i + keyStr + (i + 2) + keyStr + '*' + this[key][i]['qian'] + ' ';
+                if (this[key][i]['single'] > 0)
+                    str += i + keyStr + '*' + this[key][i]['single'] + ' ';
+            }
+        }
+        console.log(str);
     }
 }
 class Handcard {
@@ -84,14 +221,16 @@ class Handcard {
     }
     insertTile(tileInfo) {
         let key = this.getKey(tileInfo);
-        let card = this.getCard(tileInfo);
+        let card = parseInt(this.getCard(tileInfo));
         this.tileInfo.newSingle(key, card);
     }
-    findWorstTile() {
+    findWorstTile(){
 
     }
     deleteTile(tileInfo) {
-
+        let key = this.getKey(tileInfo);
+        let card = parseInt(this.getCard(tileInfo));
+        this.tileInfo.remove();
     }
 
     test() {
@@ -113,7 +252,10 @@ class Handcard {
         let times = 0;
         for (; times < 136; times++) {
             let now = Date.now();
-            this.insertTile(this.tileIDToCode(list[times]));
+            let tile = this.tileIDToCode(list[times]);
+            this.insertTile(tile);
+            console.log('insert tile:',tile);
+            this.tileInfo.printDebug();
             if (this.tileInfo.tiles == 14) {
                 if (this.ok()) {
                     console.log('hule, use card: ', times + 1 - 13);
