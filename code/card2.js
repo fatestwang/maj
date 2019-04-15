@@ -237,7 +237,7 @@ class TileInfo {
                 return;
             } //右连
         }
-        //嵌张
+        //middle of shun
         if (key != 'z') {
             if (this[key][card - 2]['single'] > 0) {
                 this[key][card - 2]['single']--;
@@ -246,7 +246,7 @@ class TileInfo {
                 this[key]['qian']++;
                 this.refreshInfo();
                 return;
-            } //左嵌
+            } //combine with left
             if (this[key][card + 2]['single'] > 0) {
                 this[key][card + 2]['single']--;
                 this[key][card]['qian']++;
@@ -257,14 +257,14 @@ class TileInfo {
             } //右嵌
 
         }
-        //单张
+        //single
         {
             this[key][card]['single']++;
             this.refreshInfo();
         }
         return;
     }
-    //和牌
+    //ting pai
     isTing() {
         if (this.shun + this.ke == 4 ||
             this.que > 0 && this.shun + this.ke == 3 && this.que + this.qian + this.lian == 2)
@@ -274,6 +274,7 @@ class TileInfo {
         if (this.guoshi && this.guoshiCards == 13)
             return true;
     }
+    //he pai
     isHe() {
         if (this.shun + this.ke == 4 && this.que == 1)
             return true;
@@ -356,9 +357,9 @@ class TileInfo {
         this[key]['amount']--;
         this.refreshInfo();
     }
-    //需要计算价值，emmmm
+    //calc value，then remove worst
     removeWorstTile() {
-        //初始化
+        //init
         let minkey = 'z';
         let mincard = 1;
         let min = 100000000;
@@ -366,11 +367,11 @@ class TileInfo {
             for (let i = 1; i < 10; i++)
                 this[key][i]['val'] = min;
 
-        //逐个叠加价值
+        //add value
         this.calcXiangtingValue();
         this.calcDora();
 
-        //找出最小价值
+        //find the worst value
         for (let key of cardTypes) {
             for (let i = 1; i < 10; i++) {
                 if (this[key][i]['val'] < min) {
