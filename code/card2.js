@@ -59,13 +59,13 @@ class TileInfo {
             this[key][card - 2]['single'] + this[key][card - 2]['que'] + this[key][card - 2]['ke'] > 0 &&
             this[key][card - 1]['ke'] != this[key][card - 2]['ke'])
             return true;
-        
-        if(this[key][card - 1]['ke'] == this[key][card - 2]['ke'] && this[key][card - 1]['ke'] == 1){// abbbcccd
+
+        if (this[key][card - 1]['ke'] == this[key][card - 2]['ke'] && this[key][card - 1]['ke'] == 1) { // abbbcccd
         }
-        
+
         if (card > 5 && this[key][card - 3]['shun'] > 0)
             return this.canCombineLeft(key, card - 3);
-        else return false;
+        return false;
     }
     doCombineLeft(key, card) {
         if (this[key][card - 2]['lian'] > 0) {
@@ -76,27 +76,55 @@ class TileInfo {
 
         if (this[key][card - 1]['single'] + this[key][card - 1]['que'] + this[key][card - 1]['ke'] > 0 &&
             this[key][card - 2]['single'] + this[key][card - 2]['que'] + this[key][card - 2]['ke'] > 0 &&
-            this[key][card - 1]['ke'] != this[key][card - 2]['ke']){
-                this[key][card - 2]['shun']++;
-                if(this[key][card-2][])
-            
-                return true;
+            this[key][card - 1]['ke'] != this[key][card - 2]['ke']) {
+
+            this[key][card - 2]['shun']++;
+
+            if (this[key][card - 1]['single'] > 0)
+                this[key][card - 1]['single']--;
+            else if (this[key][card - 1]['que'] > 0) {
+                this[key][card - 1]['que']--;
+                this[key][card - 1]['single']++;
+            } else if (this[key][card - 1]['ke'] > 0) {
+                this[key][card - 1]['ke']--;
+                this[key][card - 1]['que']++;
+            }
+
+            if (this[key][card - 2]['single'] > 0)
+                this[key][card - 2]['single']--;
+            else if (this[key][card - 2]['que'] > 0) {
+                this[key][card - 2]['que']--;
+                this[key][card - 2]['single']++;
+            } else if (this[key][card - 2]['ke'] > 0) {
+                this[key][card - 2]['ke']--;
+                this[key][card - 2]['que']++;
+            }
+
+            return true;
         }
-            
+
         if (card > 5 && this[key][card - 3]['shun'] > 0) {
             this[key][card - 3]['shun']--;
             this[key][card - 2]['shun']++;
             return this.doCombineLeft(key, card - 3);
-        } else {
-            console.log('error combine left', card, key);
-            return false;
         }
+        console.log('error combine left', card, key);
+        return false;
     }
     canCombineRight(key, card) {
         if (this[key][card + 1]['lian'] > 0) return true;
+
+        if (this[key][card + 1]['single'] + this[key][card + 1]['que'] + this[key][card + 1]['ke'] > 0 &&
+            this[key][card + 2]['single'] + this[key][card + 2]['que'] + this[key][card + 2]['ke'] > 0 &&
+            this[key][card + 1]['ke'] != this[key][card + 2]['ke'])
+            return true;
+
+        if (this[key][card + 1]['ke'] == this[key][card + 2]['ke'] && this[key][card + 1]['ke'] == 1) { // abbbcccd
+        }
+
         if (card < 5 && this[key][card + 1]['shun'] > 0)
             return this.canCombineRight(key, card + 3);
-        else return false;
+        return false;
     }
     doCombineRight(key, card) {
         if (this[key][card + 1]['lian'] > 0) {
@@ -104,14 +132,42 @@ class TileInfo {
             this[key][card]['shun']++;
             return true;
         }
+        if (this[key][card + 2]['single'] + this[key][card + 2]['que'] + this[key][card + 2]['ke'] > 0 &&
+            this[key][card + 1]['single'] + this[key][card + 1]['que'] + this[key][card + 1]['ke'] > 0 &&
+            this[key][card + 2]['ke'] != this[key][card + 1]['ke']) {
+
+            this[key][card + 1]['shun']++;
+
+            if (this[key][card + 2]['single'] > 0)
+                this[key][card + 2]['single']--;
+            else if (this[key][card + 2]['que'] > 0) {
+                this[key][card + 2]['que']--;
+                this[key][card + 2]['single']++;
+            } else if (this[key][card + 2]['ke'] > 0) {
+                this[key][card + 2]['ke']--;
+                this[key][card + 2]['que']++;
+            }
+
+            if (this[key][card + 1]['single'] > 0)
+                this[key][card + 1]['single']--;
+            else if (this[key][card + 1]['que'] > 0) {
+                this[key][card + 1]['que']--;
+                this[key][card + 1]['single']++;
+            } else if (this[key][card + 1]['ke'] > 0) {
+                this[key][card + 1]['ke']--;
+                this[key][card + 1]['que']++;
+            }
+
+            return true;
+        }
+
         if (card < 5 && this[key][card + 1]['shun'] > 0) {
             this[key][card + 1]['shun']--;
             this[key][card]['shun']++;
             return this.doCombineRight(key, card + 3);
-        } else {
-            console.log('error combine right', card, key);
-            return false;
         }
+        console.log('error combine right', card, key);
+        return false;
     }
     canCombinMiddle(key, card) {
         if (this[key][card - 1]['qian'] > 0)
@@ -160,7 +216,7 @@ class TileInfo {
                 this[key][card + 1]['single']--;
                 this[key][card - 1]['que']--;
                 this[key][card - 1]['single']++;
-                this[key][card - 1][shun]++;
+                this[key][card - 1]['shun']++;
                 return true;
             }
             if (this[key][card - 3]['qian'] > 0) {
@@ -275,12 +331,15 @@ class TileInfo {
         this[key][card]['amount']++;
     }
     //public----------------------------------------
-    newSingle(key, card) { //key:mpsz, card:1-9
+    newSingle(key, card) {
         if (card == 0) { //red five
             this[key].redora++;
             card = 5;
         }
         this.addAmount(key, card);
+        this.insertTile(key, card);
+    }
+    insertTile(key, card) { //key:mpsz, card:1-9
         if (key != 'z') {
             if (this.canCombineLeft(key, card)) {
                 this.doCombineLeft(key, card);
@@ -387,71 +446,69 @@ class TileInfo {
         }
         if (this[key][card]['dora'] > 0) {
             this[key][card]['dora']--;
-            this[key]['dora']--;
         }
+
+        this[key][card]['amount']--;
+        this[key]['amount']--;
+        this.resetTile(key, card);
+    }
+    resetTile(key, card) {
         if (this[key][card]['single'] > 0) {
             this[key][card]['single']--;
             this[key]['single']--;
-        } else if (this[key][card]['qian'] > 0 || this[key][card - 2]['qian'] > 0) {
-            if (this[key][card]['qian'] > 0) {
-                this[key][card]['qian']--;
-                this[key][card + 2]['single']++;
-                this[key]['qian']--;
-                this[key]['single']++;
-            } else {
-                this[key][card - 2]['qian']--;
-                this[key][card - 2]['single']++;
-                this[key]['qian']--;
-                this[key]['single']++;
-            }
-        } else if (this[key][card]['que'] > 0 && this['que'] > 1) {
-            this[key][card]['que']--;
-            this[key][card]['single']++;
-            this[key]['que']--;
-            this[key]['single']++;
-        } else if (this[key][card]['lian'] > 0 || this[key][card - 1]['lian'] > 0) {
-            if (this[key][card]['lian'] > 0) {
-                this[key][card]['lian']--;
-                this[key][card + 1]['single']++;
-                this[key]['lian']--;
-                this[key]['single']++;
-            } else {
-                this[key][card - 1]['lian']--;
-                this[key][card - 1]['single']++;
-                this[key]['lian']--;
-                this[key]['single']++;
-            }
-        } else if (this[key][card]['que'] > 0) {
-            this[key][card]['que']--;
-            this[key][card]['single']++;
-            this[key]['que']--;
-            this[key]['single']++;
-        } else if (this[key][card]['ke'] > 0) {
-            this[key][card]['ke']--;
-            this[key][card]['que']++;
-            this[key]['ke']--;
-            this[key]['que']++;
-        } else {
-            if (this[key][card - 2]['shun'] > 0) {
-                this[key][card - 2]['shun']--;
-                this[key][card - 1]['lian']++;
-                this[key]['shun']--;
-                this[key]['lian']++;
-            } else if (this[key][card - 1]['shun'] > 0) {
-                this[key][card - 1]['shun']--;
-                this[key][card - 1]['qian']++;
-                this[key]['shun']--;
-                this[key]['qian']++;
-            } else if (this[key][card]['shun'] > 0) {
-                this[key][card]['shun']--;
-                this[key][card + 1]['lian']++;
-                this[key]['shun']--;
-                this[key]['lian']++;
-            }
+            this.refreshInfo();
+            return;
         }
-        this[key][card]['amount']--;
-        this[key]['amount']--;
-        this.refreshInfo();
+        if (this[key][card]['qian'] > 0) {
+            this[key][card]['qian']--;
+            this.insertTile(key, card + 2);
+            return;
+        }
+        if (this[key][card - 2]['qian'] > 0) {
+            this[key][card - 2]['qian']--;
+            this.insertTile(key, card - 2);
+            return;
+        }
+        if (this[key][card]['lian'] > 0) {
+            this[key][card]['lian']--;
+            this.insertTile(key, card + 1);
+            return;
+        }
+        if (this[key][card - 1]['lian'] > 0) {
+            this[key][card - 1]['lian']--;
+            this.insertTile(key, card - 1);
+            return;
+        }
+        if (this[key][card]['que'] > 0) {
+            this[key][card]['que']--;
+            this.insertTile(key, card);
+            return;
+        }
+        if (this[key][card]['ke'] > 0) {
+            this[key][card]['ke']--;
+            this.insertTile(key, card);
+            this.insertTile(key, card);
+            return;
+        }
+        if (this[key][card - 2]['shun'] > 0) {
+            this[key][card - 2]['shun']--;
+            this.insertTile(key, card - 1);
+            this.insertTile(key, card - 2);
+            return;
+        }
+        if (this[key][card - 1]['shun'] > 0) {
+            this[key][card - 1]['shun']--;
+            this.insertTile(key, card - 1);
+            this.insertTile(key, card + 1);
+            return;
+        }
+        if (this[key][card]['shun'] > 0) {
+            this.insertTile(key, card + 1);
+            this.insertTile(key, card + 2);
+            return;
+        }
+        console.log('error: cannot find this tile!');
+        return false;
     }
     //calc value，then remove worst
     removeWorstTile() {
