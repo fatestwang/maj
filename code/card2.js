@@ -317,59 +317,53 @@ class TileInfo {
         return;
     }
 
+    calcPatternSingle(key, card){
+        if(key =='z'){
+
+        }
+    }
     calcPatternValue() {
         for (let key of cardTypes)
-            for (let i = 1; i < 10; i++) {
-                if (this[key][i]['shun'] > 0) {
-                    this[key][i]['val'] = 100;
-                    this[key][i + 1]['val'] = 100;
-                    this[key][i + 2]['val'] = 100;
-                }
-            }
-        for (let key of cardTypes)
             for (let i = 1; i < 10; i++)
-                if (this[key][i]['ke'] > 0 && this['que'] > 0) {
-                    this[key][i]['val'] = 100;
-                    this[key][i + 1]['val'] = 100;
-                    this[key][i + 2]['val'] = 100;
-                }
+                if (this[key][i]['amount'] > 0) {
+                    this[key][i]['val'] = 0;
 
-        for (let key of cardTypes)
-            for (let i = 1; i < 10; i++) {
-                if (this[key][i]['lian'] > 0) {
-                    this[key][i]['val'] = Math.min(this[key][i]['val'], (this[key][i - 1]['remain'] + this[key][i + 2]['remain']) / this['remain']);
-                    this[key][i + 1]['val'] = Math.min(this[key][i + 1]['val'], (this[key][i - 1]['remain'] + this[key][i + 2]['remain']) / this['remain']);
-                }
-            }
-        for (let key of cardTypes)
-            for (let i = 1; i < 10; i++) {
-                if (this[key][i]['que'] > 0) {
-                    if (this['que'] == 1)
-                        this[key][i]['val'] = Math.min(this[key][i]['val'], 100);
-                    else 
-                        this[key][i]['val'] = Math.min(this[key][i]['val'], this[key][i]['remain'] / this['remain']);
-                }
-            }
-        for (let key of cardTypes)
-            for (let i = 1; i < 10; i++) {
-                if (this[key][i]['qian'] > 0) {
-                    this[key][i]['val'] = Math.min(this[key][i]['val'], this[key][i + 1]['remain'] / this['remain']);
-                    this[key][i + 2]['val'] = Math.min(this[key][i + 2]['val'], this[key][i + 1]['remain'] / this['remain']);
-                }
-            }
-        for (let key of cardTypes)
-            for (let i = 1; i < 10; i++) {
-                if (this[key][i]['single'] > 0) {
-                    if (key == 'z')
-                        this[key][i]['val'] = Math.min(this[key][i]['val'], this[key][i]['remain'] / this['remain'] / this['remain']);
-                    else {
-                        let needs = this[key][i - 2]['remain'] + this[key][i - 1]['remain'] +
-                            this[key][i]['remain'] + this[key][i + 1]['remain'] +
-                            this[key][i + 2]['remain'];
-                        this[key][i]['val'] = Math.min(this[key][i]['val'], needs / this['remain'] * needs / this['remain']);
+                    if (this[key][i]['shun'] > 0 || this[key][i-1]['shun'] > 0 || this[key][i-2]['shun'] > 0) {
+                        this[key][i]['val'] = 625;
+                    }
+
+                    if (this[key][i]['ke'] > 0){ 
+                        if(this['que'] > 0) 
+                            this[key][i]['val'] = 625;
+                        else 
+                            this[key][i]['val'] = calcPatternSingle(key, card);
+                    }
+
+                    if (this[key][i]['lian'] > 0) {
+                        this[key][i]['val'] = Math.min(this[key][i]['val'], (this[key][i - 1]['remain'] + this[key][i + 2]['remain']) / this['remain']);
+                        this[key][i + 1]['val'] = Math.min(this[key][i + 1]['val'], (this[key][i - 1]['remain'] + this[key][i + 2]['remain']) / this['remain']);
+                    }
+                    if (this[key][i]['que'] > 0) {
+                        if (this['que'] == 1)
+                            this[key][i]['val'] = Math.min(this[key][i]['val'], 100);
+                        else
+                            this[key][i]['val'] = Math.min(this[key][i]['val'], this[key][i]['remain'] / this['remain']);
+                    }
+                    if (this[key][i]['qian'] > 0) {
+                        this[key][i]['val'] = Math.min(this[key][i]['val'], this[key][i + 1]['remain'] / this['remain']);
+                        this[key][i + 2]['val'] = Math.min(this[key][i + 2]['val'], this[key][i + 1]['remain'] / this['remain']);
+                    }
+                    if (this[key][i]['single'] > 0) {
+                        if (key == 'z')
+                            this[key][i]['val'] = Math.min(this[key][i]['val'], this[key][i]['remain'] / this['remain'] / this['remain']);
+                        else {
+                            let needs = this[key][i - 2]['remain'] + this[key][i - 1]['remain'] +
+                                this[key][i]['remain'] + this[key][i + 1]['remain'] +
+                                this[key][i + 2]['remain'];
+                            this[key][i]['val'] = Math.min(this[key][i]['val'], needs / this['remain'] * needs / this['remain']);
+                        }
                     }
                 }
-            }
     }
     calcDora() {
         for (let key of cardTypes)
@@ -378,6 +372,12 @@ class TileInfo {
                     this[key][i]['val'] += 20;
                 }
             }
+    }
+    calcValue(){
+        for (let key of cardTypes)
+        for (let i = 1; i < 10; i++)
+            if (this[key][i]['amount'] > 0)
+                this[key][i]['val'] = this[key][i]['normal'] + this[key][i]['upgrade'] * 25
     }
     addAmount(key, card) {
         if (this[key][card]['amount'] >= 4) {
@@ -569,7 +569,7 @@ class TileInfo {
         //add value
         this.calcPatternValue();
         this.calcDora();
-
+        this.calcValue();
         //find the worst value
         for (let key of cardTypes) {
             for (let i = 1; i < 10; i++) {
@@ -721,7 +721,7 @@ let hc = new Handcard();
 
 let insertTime = [];
 let log = [];
-let runtimes = 500;
+let runtimes = 5;
 let sum = 0;
 for (let i = 0; i < runtimes; i++) {
     let s = hc.test();
@@ -729,7 +729,7 @@ for (let i = 0; i < runtimes; i++) {
         console.log(s.log);
     log.push(s.log)
     insertTime.push(s.number);
-    sum+=s.number;
+    sum += s.number;
 }
 console.log(insertTime);
 console.log(sum / runtimes);
