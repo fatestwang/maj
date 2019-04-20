@@ -1,3 +1,5 @@
+const XIANG_TING_VALUE = 25;
+const DOUBLE_XT_VALUE = 625;
 const cardTypes = ['m', 'p', 's', 'z'];
 const visiable = {
     m: '万',
@@ -11,7 +13,7 @@ let getKey = function (tile) {
     return tile[1];
 }
 let getCard = function (tile) {
-    return tile[0];
+    return parseInt(tile[0]);
 }
 let getTile = function (key, card) {
     return card + key;
@@ -53,6 +55,102 @@ class TileInfo {
             }
     }
     //private-----------------------------------
+    canCombineLeftLian(key, card) {
+        if (this[key][card - 1]['single'] > 0 || this[key][card - 1]['ke'] > 0)
+            return true;
+        if (key > 3 && this[key][card - 3]['qian'] > 0)
+            return true;
+        if (key > 2 && this[key][card - 2]['lian'] > 0)
+            return true;
+        // if (this[key][card]['que'] > 0 || this[key][card + 1]['que'] > 0)
+        //     return true;
+        if (card > 5 && this[key][card - 3]['shun'] > 0)
+            return this.canCombineLeftLian(key, card - 3);
+        return false;
+    }
+    doCombineLeftLian(key, card) {
+        if (this[key][card - 1]['single'] > 0 || this[key][card - 1]['ke'] > 0) {
+            this[key][card - 1]['shun']++;
+            if (this[key][card - 1]['single'] > 0) {
+                this[key][card - 1]['single']--;
+            } else {
+                this[key][card - 1]['ke']--;
+                this[key][card - 1]['que']++;
+            }
+            this.refreshInfo();
+            return;
+        }
+        if (key > 3 && this[key][card - 3]['qian'] > 0) {
+            this[key][card - 1]['shun']++;
+            this[key][card - 3]['qian']--;
+            this[key][card - 3]['single']++;
+            this.refreshInfo();
+            return;
+        }
+        if (key > 2 && this[key][card - 2]['lian'] > 0) {
+            this[key][card - 1]['shun']++;
+            this[key][card - 2]['lian']--;
+            this[key][card - 2]['single']++;
+            this.refreshInfo();
+            return;
+        }
+        if (card > 5 && this[key][card - 3]['shun'] > 0) {
+            this[key][card - 1]['shun']++;
+            this[key][card - 3]['shun']--;
+            return this.doCombineLeftLian(key, card - 3);
+        }
+        console.log('error, combine left lian', key, card);
+        debugger;
+        return;
+    }
+    canCombineRightLian(key, card) {
+        if (this[key][card + 2]['single'] > 0 || this[key][card + 2]['ke'] > 0)
+            return true;
+        if (key < 6 && this[key][card + 2]['qian'] > 0)
+            return true;
+        if (key < 7 && this[key][card + 2]['lian'] > 0)
+            return true;
+        // if (this[key][card]['que'] > 0 || this[key][card + 1]['que'] > 0)
+        //     return true;
+        if (card < 5 && this[key][card + 2]['shun'] > 0)
+            return this.canCombineLeftLian(key, card + 3);
+        return false;
+    }
+    doCombineRightLian(key, card) {
+        if (this[key][card + 2]['single'] > 0 || this[key][card + 2]['ke'] > 0) {
+            this[key][card]['shun']++;
+            if (this[key][card + 2]['single'] > 0) {
+                this[key][card + 2]['single']--;
+            } else {
+                this[key][card + 2]['ke']--;
+                this[key][card + 2]['que']++;
+            }
+            this.refreshInfo();
+            return;
+        }
+        if (key < 6 && this[key][card + 2]['qian'] > 0) {
+            this[key][card]['shun']++;
+            this[key][card + 2]['qian']--;
+            this[key][card + 4]['single']++;
+            this.refreshInfo();
+            return;
+        }
+        if (key > 2 && this[key][card + 2]['lian'] > 0) {
+            this[key][card]['shun']++;
+            this[key][card + 2]['lian']--;
+            this[key][card + 3]['single']++;
+            this.refreshInfo();
+            return;
+        }
+        if (card < 5 && this[key][card + 3]['shun'] > 0) {
+            this[key][card]['shun']++;
+            this[key][card + 3]['shun']--;
+            return this.doCombineLeftLian(key, card + 3);
+        }
+        console.log('error, combine left lian', key, card);
+        debugger;
+        return;
+    }
     canCombineLeft(key, card) {
         if (this[key][card - 2]['lian'] > 0) return true;
 
@@ -72,6 +170,7 @@ class TileInfo {
         if (this[key][card - 2]['lian'] > 0) {
             this[key][card - 2]['lian']--;
             this[key][card - 2]['shun']++;
+            this.refreshInfo();
             return true;
         }
 
@@ -102,6 +201,7 @@ class TileInfo {
                 this[key][card - 2]['ke']--;
                 this[key][card - 2]['que']++;
             }
+            this.refreshInfo();
 
             if (leftQue) this.insertTile(key, card - 1);
             if (llftQue) this.insertTile(key, card - 2);
@@ -114,10 +214,13 @@ class TileInfo {
             return this.doCombineLeft(key, card - 3);
         }
         console.log('error combine left', card, key);
+        debugger;
         return false;
     }
     canCombineRight(key, card) {
+
         if (this[key][card + 1]['lian'] > 0) return true;
+
 
         if (this[key][card + 1]['single'] + this[key][card + 1]['que'] + this[key][card + 1]['ke'] > 0 &&
             this[key][card + 2]['single'] + this[key][card + 2]['que'] + this[key][card + 2]['ke'] > 0 &&
@@ -135,13 +238,14 @@ class TileInfo {
         if (this[key][card + 1]['lian'] > 0) {
             this[key][card + 1]['lian']--;
             this[key][card]['shun']++;
+            this.refreshInfo();
             return true;
         }
         if (this[key][card + 2]['single'] + this[key][card + 2]['que'] + this[key][card + 2]['ke'] > 0 &&
             this[key][card + 1]['single'] + this[key][card + 1]['que'] + this[key][card + 1]['ke'] > 0 &&
             this[key][card + 2]['ke'] != this[key][card + 1]['ke']) {
 
-            this[key][card + 1]['shun']++;
+            this[key][card]['shun']++;
 
             let rightQue = false;
             let rrghtQue = false;
@@ -164,6 +268,7 @@ class TileInfo {
                 this[key][card + 1]['ke']--;
                 this[key][card + 1]['que']++;
             }
+            this.refreshInfo();
             if (rightQue) this.insertTile(key, card + 1);
             if (rrghtQue) this.insertTile(key, card + 2);
             return true;
@@ -175,6 +280,7 @@ class TileInfo {
             return this.doCombineRight(key, card + 3);
         }
         console.log('error combine right', card, key);
+        debugger;
         return false;
     }
     canCombinMiddle(key, card) {
@@ -196,6 +302,7 @@ class TileInfo {
         if (this[key][card - 1]['qian'] > 0) {
             this[key][card - 1]['qian']--;
             this[key][card - 1]['shun']++;
+            this.refreshInfo();
             return;
         }
         if (this[key][card - 1]['single'] > 0) {
@@ -203,6 +310,7 @@ class TileInfo {
                 this[key][card - 1]['single']--;
                 this[key][card + 1]['que']--;
                 this[key][card - 1]['shun']++;
+                this.refreshInfo();
                 this.insertTile(key, card + 1);
                 return;
             }
@@ -210,6 +318,7 @@ class TileInfo {
                 this[key][card - 1]['single']--;
                 this[key][card + 1]['qian']--;
                 this[key][card - 1]['shun']++;
+                this.refreshInfo();
                 this.insertTile(key, card + 3);
                 return;
             }
@@ -218,6 +327,7 @@ class TileInfo {
                 this[key][card + 1]['ke']--;
                 this[key][card + 1]['que']++;
                 this[key][card - 1]['shun']++;
+                this.refreshInfo();
                 return;
             }
         }
@@ -226,6 +336,7 @@ class TileInfo {
                 this[key][card + 1]['single']--;
                 this[key][card - 1]['que']--;
                 this[key][card - 1]['shun']++;
+                this.refreshInfo();
                 this.insertTile(key, card - 1);
                 return;
             }
@@ -233,6 +344,7 @@ class TileInfo {
                 this[key][card + 1]['single']--;
                 this[key][card - 3]['qian']--;
                 this[key][card - 1]['shun']++;
+                this.refreshInfo();
                 this.insertTile(key, card - 3);
                 return;
             }
@@ -241,6 +353,7 @@ class TileInfo {
                 this[key][card - 1]['ke']--;
                 this[key][card - 1]['que']++;
                 this[key][card - 1]['shun']++;
+                this.refreshInfo();
                 return;
             }
         }
@@ -249,13 +362,130 @@ class TileInfo {
             this[key][card - 1]['que']--;
             this[key][card + 1]['que']--;
             this[key][card - 1]['shun']++;
+            this.refreshInfo();
             this.insertTile(key, card + 1);
             this.insertTile(key, card - 1);
             return;
         }
         console.log('error combine middle ', card, key);
+        debugger;
         return;
     }
+    canLianLeft(key, card) {
+        if (this[key][card - 1]['single'] > 0)
+            return true;
+        if (this[key][card - 3]['shun'] > 0)
+            return this.canLianLeft(key, card - 3);
+        return false;
+    }
+    doLianLeft(key, card) {
+        if (this[key][card - 1]['single'] > 0) {
+            this[key][card - 1]['single']--;
+            this[key][card - 1]['lian']++;
+            this.refreshInfo();
+            return;
+        }
+        if (this[key][card - 3]['shun'] > 0) {
+            this[key][card - 3]['shun']--;
+            this[key][card - 2]['shun']++;
+            this.doLianLeft(key, card - 3);
+            return;
+        }
+        console.log('error do lian left', key, card);
+        debugger;
+        return;
+    }
+    canLianRight(key, card) {
+        if (this[key][card + 1]['single'] > 0)
+            return true;
+        if (this[key][card + 1]['shun'] > 0)
+            return this.canLianRight(key, card + 3);
+        return false;
+    }
+    doLianRight(key, card) {
+        if (this[key][card + 1]['single'] > 0) {
+            this[key][card + 1]['single']--;
+            this[key][card]['lian']++;
+            this.refreshInfo();
+            return;
+        }
+        if (this[key][card + 1]['shun'] > 0) {
+            this[key][card + 1]['shun']--;
+            this[key][card]['shun']++;
+            this.doLianRight(key, card + 3);
+            return;
+        }
+        console.log('error do lian right', key, card);
+        debugger;
+        return;
+    }
+    canQianLeft(key, card) {
+        if (this[key][card - 2]['single'] > 0)
+            return true;
+        if (this[key][card - 3]['shun'] > 0)
+            return this.canQianLeft(key, card - 3);
+        return false;
+
+    }
+    doQianLeft(key, card) {
+        if (this[key][card - 2]['single'] > 0) {
+            this[key][card - 2]['single']--;
+            this[key][card - 2]['qian']++;
+            this.refreshInfo();
+            return;
+        }
+        if (this[key][card - 2]['single'] > 0 && this[key][card - 3]['shun'] > 0) { //special!!:ABBC,add D
+            this[key][card - 2]['single']--;
+            this[key][card - 3]['shun']--;
+            this[key][card - 2]['shun']++;
+            this[key][card - 3]['lian']++;
+            this.refreshInfo();
+            return;
+        }
+        if (this[key][card - 3]['shun'] > 0) {
+            this[key][card - 3]['shun']--;
+            this[key][card - 2]['shun']++;
+            this.doQianLeft(key, card - 3);
+            return;
+        }
+        console.log('error do qian left', key, card);
+        debugger;
+        return;
+    }
+    canQianRight(key, card) {
+        if (this[key][card + 2]['single'] > 0)
+            return true;
+        if (this[key][card + 1]['shun'] > 0)
+            return this.canQianRight(key, card + 3);
+        return false;
+
+    }
+    doQianRight(key, card) {
+        if (this[key][card + 2]['single'] > 0) {
+            this[key][card + 2]['single']--;
+            this[key][card]['qian']++;
+            this.refreshInfo();
+            return;
+        }
+        if (this[key][card + 2]['single'] > 0 && this[key][card + 1]['shun'] > 0) { //special!!:BCCD,add A
+            this[key][card + 2]['single']--;
+            this[key][card + 1]['shun']--;
+            this[key][card]['shun']++;
+            this[key][card + 2]['lian']++;
+            this.refreshInfo();
+            return;
+        }
+        if (this[key][card + 1]['shun'] > 0) {
+            this[key][card + 1]['shun']--;
+            this[key][card]['shun']++;
+            this.doQianRight(key, card + 3);
+            return;
+        }
+        console.log('error do qian left', key, card);
+        debugger;
+        return;
+    }
+
     canUpgradeKe(key, card) {
         if (this[key][card]['que'] > 0)
             return true;
@@ -264,10 +494,12 @@ class TileInfo {
         if (this[key][card]['que'] > 0) {
             this[key][card]['que']--;
             this[key][card]['ke']++;
-        } else {
-            console.log('error upgrade ke', card, key);
-            return false;
+            this.refreshInfo();
+            return;
         }
+        console.log('error upgrade ke', card, key);
+        debugger;
+        return;
     }
     canUpgradeQue(key, card) {
         if (this[key][card]['single'] > 0 ||
@@ -275,6 +507,15 @@ class TileInfo {
             this[key][card - 2]['qian'] > 0 ||
             this[key][card]['qian'] > 0 ||
             this[key][card]['lian'] > 0)
+            return true;
+        if (this[key][card]['shun'] > 0 && this.canCombineRightLian(key, card + 1))
+            return true;
+        if (this[key][card - 2]['shun'] > 0 && this.canCombineLeftLian(key, card - 2))
+            return true;
+
+        if (this[key][card - 1]['shun'] > 0 && this.canCombineLeft(key, card - 1))
+            return true;
+        if (this[key][card - 1]['shun'] > 0 && this.canCombineRight(key, card + 1))
             return true;
         return false;
     }
@@ -313,57 +554,141 @@ class TileInfo {
             this.insertTile(key, card - 1);
             return;
         }
+        if (this[key][card]['shun'] > 0 && this.canCombineRightLian(key, card + 1)) {
+            this[key][card]['shun']--;
+            this[key][card]['que']++;
+            this.refreshInfo();
+            this.doCombineRightLian(key, card + 1);
+            return;
+        }
+        if (this[key][card - 2]['shun'] > 0 && this.canCombineLeftLian(key, card - 2)) {
+            this[key][card - 2]['shun']--;
+            this[key][card]['que']++;
+            this.refreshInfo();
+            this.doCombineLeftLian(key, card - 2);
+            return;
+        }
+        if (this[key][card - 1]['shun'] > 0 && this.canCombineLeft(key, card - 1)) {
+            this[key][card - 1]['shun']--;
+            this[key][card]['que']++;
+            this.refreshInfo();
+            this.doCombineLeft(key, card - 1);
+            this.insertTile(key, card + 1);
+            return;
+        }
+        if (this[key][card - 1]['shun'] > 0 && this.canCombineRight(key, card + 1)) {
+            this[key][card - 1]['shun']--;
+            this[key][card]['que']++;
+            this.refreshInfo();
+            this.doCombineRight(key, card + 1);
+            this.insertTile(key, card - 1);
+            return;
+        }
+
         console.log('error, cannot upgrade que,', card, key);
+        debugger;
         return;
     }
 
-    calcPatternSingle(key, card){
-        if(key =='z'){
 
-        }
-    }
     calcPatternValue() {
         for (let key of cardTypes)
-            for (let i = 1; i < 10; i++)
-                if (this[key][i]['amount'] > 0) {
-                    this[key][i]['val'] = 0;
-
-                    if (this[key][i]['shun'] > 0 || this[key][i-1]['shun'] > 0 || this[key][i-2]['shun'] > 0) {
-                        this[key][i]['val'] = 625;
-                    }
-
-                    if (this[key][i]['ke'] > 0){ 
-                        if(this['que'] > 0) 
-                            this[key][i]['val'] = 625;
-                        else 
-                            this[key][i]['val'] = calcPatternSingle(key, card);
-                    }
-
-                    if (this[key][i]['lian'] > 0) {
-                        this[key][i]['val'] = Math.min(this[key][i]['val'], (this[key][i - 1]['remain'] + this[key][i + 2]['remain']) / this['remain']);
-                        this[key][i + 1]['val'] = Math.min(this[key][i + 1]['val'], (this[key][i - 1]['remain'] + this[key][i + 2]['remain']) / this['remain']);
-                    }
-                    if (this[key][i]['que'] > 0) {
-                        if (this['que'] == 1)
-                            this[key][i]['val'] = Math.min(this[key][i]['val'], 100);
-                        else
-                            this[key][i]['val'] = Math.min(this[key][i]['val'], this[key][i]['remain'] / this['remain']);
-                    }
-                    if (this[key][i]['qian'] > 0) {
-                        this[key][i]['val'] = Math.min(this[key][i]['val'], this[key][i + 1]['remain'] / this['remain']);
-                        this[key][i + 2]['val'] = Math.min(this[key][i + 2]['val'], this[key][i + 1]['remain'] / this['remain']);
-                    }
-                    if (this[key][i]['single'] > 0) {
-                        if (key == 'z')
-                            this[key][i]['val'] = Math.min(this[key][i]['val'], this[key][i]['remain'] / this['remain'] / this['remain']);
-                        else {
-                            let needs = this[key][i - 2]['remain'] + this[key][i - 1]['remain'] +
-                                this[key][i]['remain'] + this[key][i + 1]['remain'] +
-                                this[key][i + 2]['remain'];
-                            this[key][i]['val'] = Math.min(this[key][i]['val'], needs / this['remain'] * needs / this['remain']);
-                        }
+            for (let i = 1; i < 10; i++) {
+                this[key][i]['one'] = false;
+                this[key][i]['two'] = false;
+                this[key][i]['three'] = false;
+            }
+        let NotEC = this['ke'] + this['shun'] + this['que'] + this['lian'] + this['qian'] <= 4;
+        let NoQue = this['que'] == 0;
+        let OneQue = this['que'] == 1;
+        let twoQue = this['que'] == 2;
+        let twoOrMoreQue = this['que'] > 1;
+        let threeOrMoreQue = this['que'] > 2;
+        for (let key of cardTypes)
+            for (let i = 1; i < 10; i++) {
+                if (this[key][i]['single'] > 0) {
+                    if (NoQue || NotEC)
+                        this[key][i]['one'] |= true;
+                    this[key][i]['two'] |= true;
+                    if (key != 'z') {
+                        this[key][i - 2]['two'] |= true;
+                        this[key][i - 1]['two'] |= true;
+                        this[key][i + 1]['two'] |= true;
+                        this[key][i + 2]['two'] |= true;
                     }
                 }
+                if (this[key][i]['qian'] > 0) {
+                    this[key][i + 1]['one'] |= true;
+
+                    this[key][i - 2]['two'] |= true;
+                    this[key][i - 1]['two'] |= true;
+                    this[key][i]['two'] |= true;
+                    this[key][i + 2]['two'] |= true;
+                    this[key][i + 3]['two'] |= true;
+                    this[key][i + 4]['two'] |= true;
+
+                }
+                if (this[key][i]['lian'] > 0) {
+                    this[key][i - 1]['one'] |= true;
+                    this[key][i + 2]['one'] |= true;
+
+                    this[key][i]['two'] |= true;
+                    this[key][i + 1]['two'] |= true;
+                    this[key][i - 2]['two'] |= true;
+                    this[key][i + 3]['two'] |= true;
+                }
+                if (this[key][i]['que'] > 0) {
+                    this[key][i]['one'] |= !OneQue;
+                    this[key][i]['two'] |= OneQue;
+                    if (this[key][i - 1]['que'] > 0) { //AABB
+                        this[key][i - 2]['one'] |= threeOrMoreQue;
+                        this[key][i + 1]['one'] |= threeOrMoreQue;
+                        this[key][i - 2]['two'] |= twoQue;
+                        this[key][i + 1]['two'] |= twoQue;
+                    }
+                    if (this[key][i - 2]['que'] > 0) { //AACC
+                        this[key][i - 1]['one'] |= threeOrMoreQue;
+                        this[key][i - 1]['one'] |= twoQue;
+                    }
+                    if (this[key][i - 1]['single'] > 0) { //ABB
+                        this[key][i - 2]['one'] |= twoOrMoreQue;
+                        this[key][i + 1]['one'] |= twoOrMoreQue;
+                    }
+                    if (this[key][i - 2]['single'] > 0) { //ACC
+                        this[key][i - 1]['one'] |= twoOrMoreQue;
+                    }
+                    if (this[key][i + 1]['single'] > 0) { //BBC
+                        this[key][i - 1]['one'] |= twoOrMoreQue;
+                        this[key][i + 2]['one'] |= twoOrMoreQue;
+                    }
+                    if (this[key][i + 2]['single'] > 0) { //AAC
+                        this[key][i + 1]['one'] |= twoOrMoreQue;
+                    }
+                }
+            }
+        let one = 0;
+        let two = 0;
+        for (let key of cardTypes)
+            for (let i = 1; i < 10; i++) {
+                if (this[key][i]['one'])
+                    one += this[key][i]['remain'];
+                else if (this[key][i]['two'])
+                    two += this[key][i]['remain'];
+            }
+        let t = this.normlXiangting();
+        return (9 - t) * DOUBLE_XT_VALUE + one * XIANG_TING_VALUE + two;
+    }
+    calcValue() {
+        let value = 0;
+        //叠加牌型价值
+        value += this.calcPatternValue();
+        //dora 价值
+
+        //番价值
+
+        //防御价值
+        return value;
+
     }
     calcDora() {
         for (let key of cardTypes)
@@ -372,12 +697,6 @@ class TileInfo {
                     this[key][i]['val'] += 20;
                 }
             }
-    }
-    calcValue(){
-        for (let key of cardTypes)
-        for (let i = 1; i < 10; i++)
-            if (this[key][i]['amount'] > 0)
-                this[key][i]['val'] = this[key][i]['normal'] + this[key][i]['upgrade'] * 25
     }
     addAmount(key, card) {
         if (this[key][card]['amount'] >= 4) {
@@ -402,69 +721,79 @@ class TileInfo {
 
     }
     //public----------------------------------------
+    newCard(key, card , place){
+        if(place == 0){
+            this.newSingle(key, card);
+        }
+        else{//别人打出的牌
+
+        }
+    }
     newSingle(key, card) {
+        this.deeper = 0;
         if (card == 0) { //red five
             this[key][card]['redora']++;
             card = 5;
         }
         this.addAmount(key, card);
-        this.reduceRemain(key, card);
         this.insertTile(key, card);
-        this.refreshInfo();
     }
     insertTile(key, card) { //key:mpsz, card:1-9
+        this.deeper++;
+        if (this.deeper > 10) {
+            debugger;
+        }
         if (key != 'z') {
             if (this.canCombineLeft(key, card)) {
                 this.doCombineLeft(key, card);
                 return;
-            } else if (this.canCombineRight(key, card)) {
+            }
+            if (this.canCombineRight(key, card)) {
                 this.doCombineRight(key, card);
                 return;
-            } else if (this.canCombinMiddle(key, card)) {
+            }
+            if (this.canCombinMiddle(key, card)) {
                 this.doCombinMiddle(key, card);
                 return;
             }
-        } {
-            if (this.canUpgradeKe(key, card)) {
-                this.doUpgradeKe(key, card);
-                return;
-            }
+        }
+        if (this.canUpgradeKe(key, card)) {
+            this.doUpgradeKe(key, card);
+            return;
+
         }
         //雀头
         if (this.canUpgradeQue(key, card)) {
             this.doUpgradeQue(key, card);
             return;
         }
-        //连张
+        //lian
         if (key != 'z') {
-            if (this[key][card - 1]['single'] > 0) {
-                this[key][card - 1]['single']--;
-                this[key][card - 1]['lian']++;
+            if (this.canLianLeft(key, card)) {
+                this.doLianLeft(key, card);
                 return;
-            } //左连
-            if (this[key][card + 1]['single'] > 0) {
-                this[key][card + 1]['single']--;
-                this[key][card]['lian']++;
+            }
+            if (this.canLianRight(key, card)) {
+                this.doLianRight(key, card);
                 return;
-            } //右连
+            }
         }
-        //middle of shun
+        //qian
         if (key != 'z') {
-            if (this[key][card - 2]['single'] > 0) {
-                this[key][card - 2]['single']--;
-                this[key][card - 2]['qian']++;
+            if (this.canQianLeft(key, card)) {
+                this.doQianLeft(key, card);
                 return;
-            } //combine with left
-            if (this[key][card + 2]['single'] > 0) {
-                this[key][card + 2]['single']--;
-                this[key][card]['qian']++;
+            }
+            if (this.canQianRight(key, card)) {
+                this.doQianRight(key, card);
                 return;
-            } //右嵌
+            }
+        }
 
-        }
         //single
         {
             this[key][card]['single']++;
+            this.refreshInfo();
         }
         return;
     }
@@ -489,102 +818,126 @@ class TileInfo {
         return false;
     }
     deleteTile(key, card) {
+        let res = card + key;
+
+        if (this[key][card]['amount'] == 0) {
+            debugger;
+            return res;
+        }
         if (card == 5 && this[key][card]['redora'] > 0 && this[key][card]['amount'] == 1) {
             this[key][card]['redora'] = 0;
-            this[key]['redora'] = 0;
+            res = '0' + key;
         }
         if (this[key][card]['dora'] > 0) {
             this[key][card]['dora']--;
         }
-        this[key][card]['amount']--;
-        this.resetTile(key, card);
-        this.refreshInfo();
-    }
-    resetTile(key, card) {
+
         if (this[key][card]['single'] > 0) {
             this[key][card]['single']--;
-            return;
+            this[key][card]['amount']--;
+            this.refreshInfo();
+            return res;
         }
         if (this[key][card]['qian'] > 0) {
             this[key][card]['qian']--;
+            this[key][card]['amount']--;
+            this.refreshInfo();
             this.insertTile(key, card + 2);
-            return;
+            return res;;
         }
         if (this[key][card - 2]['qian'] > 0) {
             this[key][card - 2]['qian']--;
+            this[key][card]['amount']--;
+            this.refreshInfo();
             this.insertTile(key, card - 2);
-            return;
+            return res;;
         }
         if (this[key][card]['lian'] > 0) {
             this[key][card]['lian']--;
+            this[key][card]['amount']--;
+            this.refreshInfo();
             this.insertTile(key, card + 1);
-            return;
+            return res;;
         }
         if (this[key][card - 1]['lian'] > 0) {
             this[key][card - 1]['lian']--;
+            this[key][card]['amount']--;
+            this.refreshInfo();
             this.insertTile(key, card - 1);
-            return;
+            return res;;
         }
         if (this[key][card]['que'] > 0) {
             this[key][card]['que']--;
+            this[key][card]['amount']--;
+            this.refreshInfo();
             this.insertTile(key, card);
-            return;
+            return res;;
         }
         if (this[key][card]['ke'] > 0) {
             this[key][card]['ke']--;
+            this[key][card]['amount']--;
+            this.refreshInfo();
             this.insertTile(key, card);
             this.insertTile(key, card);
-            return;
+            return res;;
         }
         if (this[key][card - 2]['shun'] > 0) {
             this[key][card - 2]['shun']--;
+            this[key][card]['amount']--;
+            this.refreshInfo();
             this.insertTile(key, card - 1);
             this.insertTile(key, card - 2);
-            return;
+            return res;;
         }
         if (this[key][card - 1]['shun'] > 0) {
             this[key][card - 1]['shun']--;
+            this[key][card]['amount']--;
+            this.refreshInfo();
             this.insertTile(key, card - 1);
             this.insertTile(key, card + 1);
-            return;
+            return res;;
         }
         if (this[key][card]['shun'] > 0) {
+            this[key][card]['shun']--;
+            this[key][card]['amount']--;
+            this.refreshInfo();
             this.insertTile(key, card + 1);
             this.insertTile(key, card + 2);
-            return;
+            return res;;
         }
-        console.log('error: cannot find this tile!');
-        return false;
+        console.log(key, card);
+        debugger;
+        return res;
     }
     //calc value，then remove worst
     removeWorstTile() {
         //init
-        let minkey = 'z';
-        let mincard = 1;
-        let min = 100000000;
+        let maxkey = 'z';
+        let maxcard = 0;
+        let max = 0;
         for (let key of cardTypes)
             for (let i = 1; i < 10; i++)
-                this[key][i]['val'] = min;
-
-        //add value
-        this.calcPatternValue();
-        this.calcDora();
-        this.calcValue();
+                this[key][i]['val'] = 0;
+        //calc value
+        for (let key of cardTypes)
+            for (let i = 1; i < 10; i++)
+                if (this[key][i]['amount'] > 0) {
+                    let tile = this.deleteTile(key, i);
+                    this[key][i]['val'] = this.calcValue();
+                    this.newSingle(getKey(tile), getCard(tile));
+                }
         //find the worst value
         for (let key of cardTypes) {
             for (let i = 1; i < 10; i++) {
-                if (this[key][i]['val'] < min) {
-                    minkey = key;
-                    mincard = i;
-                    min = this[key][i]['val'];
+                if (this[key][i]['amount'] > 0 && this[key][i]['val'] > max) {
+                    maxkey = key;
+                    maxcard = i;
+                    max = this[key][i]['val'];
                 }
             }
         }
-        let res = mincard + minkey;
-        if (mincard == 5 && this[minkey]['redora'] == 1 && this[minkey][mincard]['amount'] == 1)
-            res = '0' + minkey;
-        this.deleteTile(minkey, mincard);
-        return res;
+
+        return this.deleteTile(maxkey, maxcard);
     }
     refreshInfo() {
         for (let key of cardTypes)
@@ -618,7 +971,20 @@ class TileInfo {
                     str += i + keyStr + '*' + this[key][i]['single'] + ' ';
             }
         }
-        return str + ' ' + this.normlXiangting();
+        let debugStr = '';
+        for (let key of cardTypes)
+            for (let i = 1; i < 10; i++)
+                for (let k = 0; k < this[key][i]['amount']; k++)
+                    debugStr += '\'' + i + key + '\',';
+        let valStr = '';
+        for (let key of cardTypes) {
+            let keyStr = visiable[key];
+            for (let i = 1; i < 10; i++)
+                if (this[key][i]['val'] < 5000) {
+                    valStr += i + keyStr + ':' + this[key][i]['val'] + ' ';
+                }
+        }
+        return [str + ' ' + this.normlXiangting(), valStr, debugStr];
     }
     normlXiangting() {
         let t = 0;
@@ -653,36 +1019,37 @@ class Handcard {
 
         }
         this.timeCost = 0;
-        let times = 0;
-        for (; times < 136; times++) {
+        for (let times = 0; times < 136; times++) {
+            if(times == 124) {
+                logger.number = -1;
+                break;
+            }
             let now = Date.now();
             let tile = tileIDToCode(list[times]);
 
             let key = getKey(tile);
             let card = parseInt(getCard(tile));
 
-            this.tileInfo.newSingle(key, card);
-            logger.number++;
+            this.tileInfo.reduceRemain(key, card);
+            this.tileInfo.newCard(key, card, times % 4);
             //console.log('');
             //console.log('insert tile:', tile);
             if (this.tileInfo['amount'] == 14) {
+                logger.number++;
                 if (this.tileInfo.isHe()) {
                     logger.log.push('hule, insert tile: ' + tile + '  use card: ' + (times + 1 - 13));
-                    logger.log.push(this.tileInfo.printDebug());
+                    logger.log.push(...this.tileInfo.printDebug());
                     this.timeCost += (Date.now() - now);
                     break;
                 } else {
                     let removeTile = this.tileInfo.removeWorstTile();
-                    if (removeTile != tile) {
-                        logger.log.push('insert tile: ' + tile + '  remove tile: ' + removeTile + '  index: ' + times);
-                        logger.log.push('amount: ' + this.tileInfo['amount']);
-                        logger.log.push(this.tileInfo.printDebug());
-                    }
+                    logger.log.push('insert tile: ' + tile + '  remove tile: ' + removeTile + '  index: ' + (Math.floor((times - 13) / 4) + 1));
+                    logger.log.push('amount: ' + this.tileInfo['amount']);
+                    logger.log.push(...this.tileInfo.printDebug());
                     this.timeCost += (Date.now() - now);
                 }
             }
         }
-        logger.log.push('avg time Cost(ms):', Math.floor(this.timeCost / times));
         return logger;
     }
 
@@ -702,13 +1069,13 @@ class Handcard {
             if (this.tileInfo['amount'] == 14) {
                 if (this.tileInfo.isHe()) {
                     console.log('hule, insert tile: ', tile, ' use card: ', times + 1 - 13);
-                    console.log(this.tileInfo.printDebug());
+                    console.log(...this.tileInfo.printDebug());
                     break;
                 } else {
                     let removeTile = this.tileInfo.removeWorstTile();
                     console.log('');
                     console.log('insert tile:', tile, 'remove tile: ', removeTile);
-                    console.log(this.tileInfo.printDebug());
+                    console.log(...this.tileInfo.printDebug());
                 }
             }
         }
@@ -717,24 +1084,27 @@ class Handcard {
 
 let hc = new Handcard();
 
-
-
 let insertTime = [];
 let log = [];
-let runtimes = 5;
+let runtimes = 10;
 let sum = 0;
+let heTimes = 0;
 for (let i = 0; i < runtimes; i++) {
     let s = hc.test();
     if (s.number > 130)
         console.log(s.log);
     log.push(s.log)
     insertTime.push(s.number);
-    sum += s.number;
+    if(s.number>=0){
+        sum += s.number;
+        heTimes ++;
+    }
 }
+
 console.log(insertTime);
-console.log(sum / runtimes);
+console.log('和牌效率', sum / heTimes,' 和牌次数:', heTimes,' 模拟次数:',runtimes);
 debugger;
 
-//2筒4筒*1 5筒*1 7筒9筒*1 3条*1 9条*1 3字*1 4字*1 5字5字*1 6字*1 7字*1 
-let sample = ['2p', '4p', '5p', '7p', '9p', '3s', '9s', '3z', '4z', '5z', '6z', '7z', '5z', '6p'];
-//hc.singleTest(sample);
+//4万5万6万*1 6万7万8万*1 5条6条7条*1 5条*1 7条8条9条*1 6s
+let sample = ['1p','3p','4p','5p','7p','9p','1s','7s','5s','7s','9s','3z','6z','2s'];
+hc.singleTest(sample);
