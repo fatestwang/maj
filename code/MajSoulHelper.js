@@ -5,14 +5,53 @@ let ai = new MAJAI();
 
 class MajSoulHelper {
     constructor() {
+        this.inGame = false;
+        this.inWaiting = false;
+        this.noResponseTimes = 0;
+        this.getMessageTimes = 0;
         console.log('this is a hacked file!');
         ai.setHelpelper(this);
+        setInterval(() => {
+            this.checkGameStates();
+        }, 10000);
     }
-    startGame(matchRoomID) {
+    checkGameStates(){
+        if(!this.inGame && !this.inWaiting){
+            this.startGame();
+            return;
+        }
+        if(this.inWaiting){
+            return;
+        }
+        if(this.getMessageTimes == 0){
+            this.noResponseTimes ++;
+        }
+        else{
+            this.noResponseTimes = 0;
+            this.getMessageTimes = 0;
+        }
+        if(this.noResponseTimes >=3 ){
+            window.location.reload();
+        }
+    }
+
+    //自动加入最高级的东房间
+    startGame() {
+        let maxRoomID = 2;
+        let level = GameMgr.Inst.account_data.level.id;
+        for(let i = 3; i< 16; i++)
+            if(cfg.desktop.matchmode.map_[i].mode == 1){
+                if(cfg.desktop.matchmode.map_[i].level_limit <= level &&
+                    cfg.desktop.matchmode.map_[i].level_limit_ceil >= level)
+                maxRoomID = i;
+            }
+        console.log(level, cfg.desktop.matchmode.map_[maxRoomID].room_name);
         app.NetAgent.sendReq2Lobby("Lobby", "matchGame", {
-            match_mode: matchRoomID
+            match_mode: maxRoomID
         })
+        this.inWaiting = true;
     }
+
     syncGameByStep(cmd, msg) {
         try {
             if (cmd == 'ActionDiscardTile' ||
@@ -49,6 +88,9 @@ class MajSoulHelper {
         }
     }
     onMessage(cmd, msg) {
+        this.inGame = true;
+        this.inWaiting = false;
+        this.getMessageTimes ++;
         try {
             if (cmd == 'ActionDiscardTile' ||
                 cmd == 'ActionDealTile' ||
@@ -83,39 +125,11 @@ class MajSoulHelper {
                 default:
                     break;
             }
-
-            if (!msg || !msg.operation) return;
-
-            let flag_hu = 0,
-                flag_rong = 0,
-                flag_other = 0,
-                flag_self = 0;
-            for (let i = 0; i < msg.operation.operation_list.length; i++) {
-                switch (msg.operation.operation_list[i].type) {
-                    case mjcore.E_PlayOperation.rong:
-                        flag_rong = !0;
-                    case mjcore.E_PlayOperation.eat:
-                    case mjcore.E_PlayOperation.peng:
-                    case mjcore.E_PlayOperation.ming_gang:
-                        flag_other = !0;
-                        break;
-                    case mjcore.E_PlayOperation.zimo:
-                        flag_hu = !0;
-                    case mjcore.E_PlayOperation.an_gang:
-                    case mjcore.E_PlayOperation.add_gang:
-                    case mjcore.E_PlayOperation.liqi:
-                    case mjcore.E_PlayOperation.dapai:
-                        flag_self = !0;
-                        break;
-                }
-            }
-            console.log('fatse flag ', flag_rong, flag_hu, flag_other, flag_self);
-
-            majAI.work(this, this.doAction);
         } catch (e) {
             console.log(e);
         }
     }
+
     /**
      * type和args需要一一对应
      */

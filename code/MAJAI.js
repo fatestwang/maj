@@ -1,4 +1,8 @@
 const Action = require('./ActionList');
+const {
+    TileInfo
+} = require('./TileInfo');
+
 const OperationList = {
     none: "none",
     dapai: "dapai",
@@ -18,148 +22,120 @@ class MAJAI {
         this.newRoundInited = false;
         this.selfSeat = 0;
     }
-    //helper
+    //private
+    isSelfOperation(seat) {
+        return seat == this.selfSeat;
+    }
+    doMainJop() {
+        if (this.tileInfo.canHe()) {
+            this.helper.doZimoAction();
+            return;
+        }
+        let removeTile = this.tileInfo.removeWorstTile();
+        if (this.tileInfo.canTing()) {
+            this.helper.doLizhiAction(removeTile, removeTile == this.lastTile);
+            return;
+        }
+        //现在还不能杠。。。
+        //if(this.tileInfo.canAnGang()){
+        //}
+        this.helper.doDapaiAction(removeTile, removeTile == this.lastTile);
+    }
+    doOtherJop() {
+        if (this.tileInfo.canRong(tile)) {
+            this.helper.doRongAction();
+            return;
+        }
+        if (this.tileInfo.canChi(tile)) {
+            this.helper.doCancelAction();
+            return;
+        }
+        if (this.tileInfo.canPeng(tile)) {
+            this.helper.doCancelAction();
+            return;
+        }
+        if (this.tileInfo.canGang(tile)) {
+            this.helper.doCancelAction();
+            return;
+        }
+    }
+    //public
     setHelpelper(helper) {
         this.helper = helper;
     }
     setSeat(seat) {
         this.selfSeat = seat;
     }
-    //record
-    initEnviroment(ju, ben, liqibang, scores, dora, tiles) {
-        this.enviroment = {
-            playerList: {
-                0: { //self
-                    score: scores[0],
-                    handList: 0 == this.selfSeat ? tiles : [],
-                    discardList: [],
-                    showList: [],
-                    isLiZhi: false,
-                    isZhenTing: false,
-                },
-                1: {
-                    score: scores[1],
-                    handList: 1 == this.selfSeat ? tiles : [],
-                    discardList: [],
-                    showList: [],
-                    isLiZhi: false,
-                    isZhenTing: false,
-                },
-                2: {
-                    score: scores[2],
-                    handList: 2 == this.selfSeat ? tiles : [],
-                    discardList: [],
-                    showList: [],
-                    isLiZhi: false,
-                    isZhenTing: false,
-                },
-                3: {
-                    score: scores[3],
-                    handList: 3 == this.selfSeat ? tiles : [],
-                    discardList: [],
-                    showList: [],
-                    isLiZhi: false,
-                    isZhenTing: false,
-                }
-            },
-            ju: ju,
-            ben: ben,
-            liqibang: liqibang,
-            doraList: [dora],
-        };
-    }
     newRound(ju, ben, liqibang, scores, dora, tiles) {
-        this.initEnviroment(ju, ben, liqibang, scores, dora, tiles);
+        console.log('---new round start---');
+        this.tileInfo = new TileInfo();
+        for (let i = 0; i < tiles.length; i++) {
+            this.tileInfo.insertCard();
+        }
         this.newRoundInited = true;
-        console.log(this.enviroment);
+        console.log('---new round end---');
+        this.lastTile = tiles[tiles.length - 1];
+        if (this.tileInfo.needDapai()) {
+            this.doMainJop();
+        }
     }
     roundEnded() {
         this.newRoundInited = false;
     }
-    Self() {
-        return this.enviroment.playerList[this.selfSeat];
-    }
-    isSelfOperation() {
-        if (this.Self().handList.length % 3 == 2)
-            return true;
-        return false;
-    }
-    //response
-    //别人打了一张牌/自己摸了一张牌，东起摸最后一张
-    doCompareOperation() {
-        console.log('debug: start do compare operation.');
-        var result = {
-            value: 0,
-            operantionType: OperationList.none, //
-            tile: '', //
-            index: '', //
-            isMoqie: '', //
-        };
-        if (this.isSelfOperation()) { //摸牌后操作
-            this.judgeDapai(result);
-            this.judgeLizhi(result);
-            this.judgeAngang(result);
-            this.judgeZimo(result);
-        } else { //他家打牌后操作
-            //this.judgeChi(result);
-            //rong
-            this.judgeRong(result);
-        }
-        return result;
-    }
-
-    /**
-     * 分工步骤，尽量不卡住界面的刷新
-     */
-    work() {
-        var result = this.doCompareOperation();
-        switch (result.type) {
-            case OperationList.none:
-                this.helper.doCancelAction();
-                break;
-            case OperationList.dapai:
-                this.helper.doDapaiAction(tile, isMoqie);
-                break;
-            case OperationList.an_gang:
-                this.helper.doAngangAction(tile);
-                break;
-            case OperationList.liqi:
-                this.helper.doLizhiAction(tile, isMoqie);
-                break;
-            case OperationList.zimo:
-                this.helper.doZimoAction();
-                break;
-            case OperationList.rong:
-                this.helper.doRongAction();
-                break;
-            default:
-                break;
-        }
-    }
-
-    //judgement
-    judgeDapai(result) {
-        var searchList = {};
-        this.Self.handList.array.forEach(tile => {
-            if (searchList[tile]) return;
-            searchList[tile] = true;
-            //var newCardList = this.Self().handList - tile;
-        });
-    }
-
-    //api信息通知区
     discardTile(seat, tile, is_liqi, is_wliqi, moqie, doras) {
-        this.players[seat].discardTile(tile, is_liqi, is_wliqi, moqie);
-        this.enviroment.setDoras(doras);
+        this.tileInfo.reduceRemain(tile);
+        if(this.isSelfOperation()){
+            return;
+        }
+        this.doOtherJop();
     }
     dealTile(seat, tile, doras) {
-        this.players[seat].dealTile(tile);
-        this.enviroment.setDoras(doras);
+        this.tileInfo.setDoras(doras);
+        this.tileInfo.insertTile(tile);
+        this.lastTile = tile;
+        if (this.isSelfOperation())
+            this.doMainJop()
+        else
+            this.doOtherJop();
     }
     chiPengGang(seat, tiles, type) {
-        this.players[seat].chiPengGang(type, tiles);
+        let i = 0;
+        switch (type) {
+            OperationList.chi:
+                for (i = 0; i < tiles.length; i++)
+                    if (tiles[i] != this.lastTile)
+                        this.tileInfo.reduceRemain(tiles[i]);
+            break;
+            OperationList.peng:
+                for (i = 0; i < tiles.length; i++)
+                    if (tiles[i] != this.lastTile)
+                        this.tileInfo.reduceRemain(tiles[i]);
+            break;
+            OperationList.ming_gang:
+                for (i = 0; i < tiles.length; i++)
+                    if (tiles[0] != this.lastTile)
+                        this.tileInfo.clearRemain(tiles[i]);
+            break;
+            return;
+        }
+        if (this.isSelfOperation()) {
+            this.doMainJop();
+            return;
+        }
     }
     anGangAddGang(seat, tiles, type) {
-        this.players[seat].anGangAddGang(type, tiles);
+        let i = 0;
+        switch (type) {
+            OperationList.add_gang:
+                this.tileInfo.clearRemain(tiles[0]);
+            break;
+            OperationList.an_gang:
+                this.tileInfo.clearRemain(tiles[0]);
+            break;
+            return;
+        }
+        if (this.tileInfo.canRong(tiles[0])) {
+            this.helper.doRongAction();
+        }
     }
 }

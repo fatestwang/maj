@@ -8,7 +8,7 @@
             "type": "node",
             "request": "launch",
             "name": "启动程序",
-            "program": "${workspaceFolder}\\code\\card2.js"
+            "program": "${workspaceFolder}\\test\\normalTest.js"
         }
     ]
 }
